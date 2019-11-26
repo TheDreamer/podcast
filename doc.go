@@ -29,11 +29,28 @@
 //
 // iTunes specific fields are all prefixed with the letter `I`.
 //
+// The only limitation you may run into is with formatting of certain fields, such
+// as Enclosure.EnclosureType and Item.PubDate.  You should really let the package
+// handle these for you as it would remain compliant.
+//
 // References
 //
 // RSS 2.0: https://cyber.harvard.edu/rss/rss.html
 //
 // Podcasts: https://help.apple.com/itc/podcasts_connect/#/itca5b22233
+//
+// Contributing
+//
+// Use standard git-flow patterns here.
+//
+// * "develop" should remain stable and releasable at all times (100% code coverage,
+// full Examples, doc.go updated, etc).
+// * Branch from "develop" into your feature or bug branch.
+// * Create a PR against "develop" branch.
+//
+// In addition, I ask that you rebase from "develop" and Squash all of your commits
+// into a single commit. (git rebase -i origin/develop)  I like single clean code
+// commits into develop and master to track what changed, by who and when.
 //
 // Final Release
 //
@@ -48,6 +65,19 @@
 // Thank you!
 //
 // Release Notes
+//
+// 2.0.0 (develop branch)
+//
+// Primary objective:
+// * Add ability to read existing Podcast feeds.
+//
+// Todo:
+// * finish implementing custom UnmarhalXML and MarshalXML work.
+// * add logic to handle <rss> root element (Breaking Changes?).
+// * if we have to make a breaking change, rename Podcast -> Channel.
+// * add Examples for reading existing Feeds.
+// * determine if we should blow up, or allow malformed feeds?
+// * update README.
 //
 // 1.3.1
 // * increased itunes compliance after feedback from Apple:

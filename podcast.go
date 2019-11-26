@@ -13,47 +13,47 @@ import (
 )
 
 const (
-	pVersion = "1.3.1"
+	pVersion = "2.0.0"
 )
 
 // Podcast represents a podcast.
 type Podcast struct {
-	XMLName        xml.Name `xml:"channel"`
-	Title          string   `xml:"title"`
-	Link           string   `xml:"link"`
-	Description    string   `xml:"description"`
-	Category       string   `xml:"category,omitempty"`
-	Cloud          string   `xml:"cloud,omitempty"`
-	Copyright      string   `xml:"copyright,omitempty"`
-	Docs           string   `xml:"docs,omitempty"`
-	Generator      string   `xml:"generator,omitempty"`
-	Language       string   `xml:"language,omitempty"`
-	LastBuildDate  string   `xml:"lastBuildDate,omitempty"`
-	ManagingEditor string   `xml:"managingEditor,omitempty"`
-	PubDate        string   `xml:"pubDate,omitempty"`
-	Rating         string   `xml:"rating,omitempty"`
-	SkipHours      string   `xml:"skipHours,omitempty"`
-	SkipDays       string   `xml:"skipDays,omitempty"`
-	TTL            int      `xml:"ttl,omitempty"`
-	WebMaster      string   `xml:"webMaster,omitempty"`
-	Image          *Image
-	TextInput      *TextInput
-	AtomLink       *AtomLink
+	XMLName        xml.Name   `xml:"channel"`
+	Title          string     `xml:"title"`
+	Link           string     `xml:"link"`
+	Description    string     `xml:"description"`
+	Category       string     `xml:"category,omitempty"`
+	Cloud          string     `xml:"cloud,omitempty"`
+	Copyright      string     `xml:"copyright,omitempty"`
+	Docs           string     `xml:"docs,omitempty"`
+	Generator      string     `xml:"generator,omitempty"`
+	Language       string     `xml:"language,omitempty"`
+	LastBuildDate  string     `xml:"lastBuildDate,omitempty"`
+	ManagingEditor string     `xml:"managingEditor,omitempty"`
+	PubDate        string     `xml:"pubDate,omitempty"`
+	Rating         string     `xml:"rating,omitempty"`
+	SkipHours      string     `xml:"skipHours,omitempty"`
+	SkipDays       string     `xml:"skipDays,omitempty"`
+	TTL            int        `xml:"ttl,omitempty"`
+	WebMaster      string     `xml:"webMaster,omitempty"`
+	Image          *Image     `xml:"image"`
+	TextInput      *TextInput `xml:"textInput"`
+	AtomLink       *AtomLink  `xml:"atom:link"`
 
 	// https://help.apple.com/itc/podcasts_connect/#/itcb54353390
-	IAuthor     string `xml:"itunes:author,omitempty"`
-	ISubtitle   string `xml:"itunes:subtitle,omitempty"`
-	ISummary    *ISummary
-	IBlock      string `xml:"itunes:block,omitempty"`
-	IImage      *IImage
-	IDuration   string  `xml:"itunes:duration,omitempty"`
-	IExplicit   string  `xml:"itunes:explicit,omitempty"`
-	IComplete   string  `xml:"itunes:complete,omitempty"`
-	INewFeedURL string  `xml:"itunes:new-feed-url,omitempty"`
-	IOwner      *Author // Author is formatted for itunes as-is
-	ICategories []*ICategory
+	IAuthor     string       `xml:"itunes:author,omitempty"`
+	ISubtitle   string       `xml:"itunes:subtitle,omitempty"`
+	ISummary    *ISummary    `xml:"itunes:summary"`
+	IBlock      string       `xml:"itunes:block,omitempty"`
+	IImage      *IImage      `xml:"itunes:image"`
+	IDuration   string       `xml:"itunes:duration,omitempty"`
+	IExplicit   string       `xml:"itunes:explicit,omitempty"`
+	IComplete   string       `xml:"itunes:complete,omitempty"`
+	INewFeedURL string       `xml:"itunes:new-feed-url,omitempty"`
+	IOwner      *Author      `xml:"itunes:owner"` // Author is formatted for itunes as-is
+	ICategories []*ICategory `xml:"itunes:category"`
 
-	Items []*Item
+	Items []*Item `xml:"item"`
 
 	encode func(w io.Writer, o interface{}) error
 }
@@ -274,7 +274,7 @@ func (p *Podcast) AddItem(i Item) (int, error) {
 			return len(p.Items),
 				errors.New(i.Title + ": Enclosure.URL is required")
 		}
-		if i.Enclosure.Type.String() == enclosureDefault {
+		if i.Enclosure.Type.String() == cDefault {
 			return len(p.Items),
 				errors.New(i.Title + ": Enclosure.Type is required")
 		}
@@ -293,8 +293,6 @@ func (p *Podcast) AddItem(i Item) (int, error) {
 		if i.Enclosure.Length < 0 {
 			i.Enclosure.Length = 0
 		}
-		i.Enclosure.LengthFormatted = strconv.FormatInt(i.Enclosure.Length, 10)
-		i.Enclosure.TypeFormatted = i.Enclosure.Type.String()
 
 		// allow Link to be set for article references to Downloads,
 		// otherwise set it to the enclosurer's URL.
@@ -408,6 +406,53 @@ func (p *Podcast) String() string {
 		return "String: podcast.write returned the error: " + err.Error()
 	}
 	return b.String()
+}
+
+// UnmarshalXML handles the custom formatting to a strongly typed value.
+func (p *Podcast) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	// Podcast represents an actual Channel (which should have been called
+	// "Channel" to begin with - doh!).  1.0 also didn't account for the root
+	// element <rss>, which is manually added during the encoders.
+	//
+	// therefore, for backwards compatibility, we implement this method that
+	// effectively "skips" the RSS definition and pulls out the Channel element.
+	//
+	// the downside is obviously that the re-encoded RSS may be different
+	// because of skipping the namespaces defined in <rss>.
+	//
+	// a better approach may be to break the API and implement a real <rss>
+	// struct, along with <channel> and channel would look similar to Podcast
+	// today.  the issue there is Podcast goes away - which breaks anyone who
+	// previously is trying to use this package directly, skipping the API.
+	//
+
+	decode := func(d *xml.Decoder, start xml.StartElement) error {
+		var c Podcast
+		if err := d.DecodeElement(&c, &start); err != nil {
+			return errors.Wrap(err, "Podcast.UnmarshalXML d.DecodeElement error")
+		}
+		*p = c
+		return nil
+	}
+	if start.Name.Local == "channel" {
+		return decode(d, start)
+	}
+	for {
+		t, err := d.Token()
+		if err != nil && err != io.EOF {
+			return errors.Wrap(err, "Podcast.UnmarshalXML d.Token() error")
+		}
+		if t == nil {
+			break
+		}
+		switch channel := t.(type) {
+		case xml.StartElement:
+			if start.Name.Local == "channel" {
+				return decode(d, channel)
+			}
+		}
+	}
+	return nil
 }
 
 // // Write implements the io.Writer interface to write an RSS 2.0 stream

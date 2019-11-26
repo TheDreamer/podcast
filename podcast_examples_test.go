@@ -100,7 +100,7 @@ func ExamplePodcast_AddItem() {
 		pp.IAuthor, pp.IDuration, pp.IExplicit, pp.IIsClosedCaptioned,
 		pp.IOrder, pp.ISubtitle, pp.ISummary)
 	// Output:
-	// http://example.com/1.mp3 Episode 1 http://example.com/1.mp3 Description for Episode 1 &{{ }  me@test.com (the name)}     2017-04-22 08:21:52 +0000 UTC Sat, 22 Apr 2017 08:21:52 +0000 {{ } http://example.com/1.mp3 183 183 audio/mpeg audio/mpeg} me@test.com (the name)     A simple episode 1 &{{ } See more at <a href="http://example.com">Here</a>}
+	// http://example.com/1.mp3 Episode 1 http://example.com/1.mp3 Description for Episode 1 &{{ }  me@test.com (the name)}     2017-04-22 08:21:52 +0000 UTC Sat, 22 Apr 2017 08:21:52 +0000 {{ } http://example.com/1.mp3 183 audio/mpeg} me@test.com (the name)     A simple episode 1 &{{ } See more at <a href="http://example.com">Here</a>}
 }
 
 func ExamplePodcast_AddLastBuildDate() {
@@ -183,7 +183,7 @@ See more at our website: <a href="http://example.com">example.com</a>
 	//     <title>eduncan911 Podcasts</title>
 	//     <link>http://eduncan911.com/</link>
 	//     <description>An example Podcast</description>
-	//     <generator>go podcast v1.3.1 (github.com/eduncan911/podcast)</generator>
+	//     <generator>go podcast v2.0.0 (github.com/eduncan911/podcast)</generator>
 	//     <language>en-us</language>
 	//     <lastBuildDate>Mon, 06 Feb 2017 08:21:52 +0000</lastBuildDate>
 	//     <managingEditor>me@janedoe.com (Jane Doe)</managingEditor>
@@ -220,6 +220,7 @@ See more at our website: <a href="http://example.com">example.com</a>
 	//   </channel>
 	// </rss>
 }
+<<<<<<< HEAD:examples_test.go
 
 func ExampleItem_AddPubDate() {
 	p := podcast.New("title", "link", "description", nil, nil)
@@ -258,3 +259,5 @@ func ExampleItem_AddDuration() {
 	// Output:
 	// 8:53
 }
+=======
+>>>>>>> origin/feature-Enable-Unmarshaling-Support:podcast_examples_test.go
